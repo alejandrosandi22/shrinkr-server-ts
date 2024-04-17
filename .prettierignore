@@ -1,0 +1,19 @@
+# Ignore generated files
+/dist
+/out
+/.next
+
+# Ignore build artifacts
+/build
+/.build
+
+# Ignore node_modules
+/node_modules
+
+# Ignore configuration files
+/.vscode
+/.idea
+
+# Ignore logs and temp files
+/logs
+/temp
