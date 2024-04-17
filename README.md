@@ -60,10 +60,6 @@ pnpm install --save-dev husky @commitlint/{config-conventional,cli}
 
 Now, whenever you make a commit, Husky will ensure that your commit message conforms to the conventional commit format specified by Commitlint.
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
 # Credits
 
 Developed by [Alejandro Sandí](https://alejandrosandi.dev).
