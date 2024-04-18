@@ -33,7 +33,7 @@ export class UserEntity {
   @Column({ type: 'enum', default: PlansEnum.FREE, enum: PlansEnum })
   plan: PlansEnum;
 
-  @Column()
+  @Column({ nullable: true, select: false })
   email_verified: Date;
 
   @CreateDateColumn()
