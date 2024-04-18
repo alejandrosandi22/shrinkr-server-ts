@@ -1,6 +1,10 @@
+import { URLEntity } from '@/urls/entities/urls.entity';
+import { UserEntity } from '@/users/entities/user.entity';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { URLsModule } from './urls/urls.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -15,11 +19,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       port: process.env.DB_PORT,
       password: process.env.DB_PASSWORD,
       username: process.env.DB_USER,
-      entities: [],
+      entities: [UserEntity, URLEntity],
       database: process.env.DB_NAME,
       synchronize: true,
       logging: true,
     }),
+    UsersModule,
+    URLsModule,
   ],
   controllers: [],
   providers: [],
