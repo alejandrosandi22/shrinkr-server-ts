@@ -1,9 +1,11 @@
 import { PlansEnum } from '@/lib/enums/plans.enum';
 import { ProviderEnum } from '@/lib/enums/provider.enum';
+import { URLEntity } from '@/urls/entities/urls.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -39,4 +41,9 @@ export class UserEntity {
 
   @UpdateDateColumn()
   updated_at!: Date;
+
+  @OneToMany(() => URLEntity, (urlEntity) => urlEntity.user, {
+    onDelete: 'CASCADE',
+  })
+  urls: URLEntity[];
 }
