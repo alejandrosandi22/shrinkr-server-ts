@@ -1,3 +1,4 @@
+import { AnalyticsEntity } from '@/analytics/entities/analytics.entity';
 import { UserEntity } from '@/users/entities/user.entity';
 import {
   Column,
@@ -5,6 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -41,4 +43,9 @@ export class URLEntity {
   @ManyToOne(() => UserEntity, (user) => user.urls, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
+
+  @OneToMany(() => AnalyticsEntity, (analytics) => analytics.url, {
+    onDelete: 'CASCADE',
+  })
+  analytics: AnalyticsEntity[];
 }
