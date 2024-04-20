@@ -8,6 +8,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Redirect,
   Req,
@@ -34,6 +35,11 @@ export class AuthController {
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('verify-account/:id')
+  verifyAccount(@Param('id') id: string) {
+    return this.authService.verifyAccount(+id);
   }
 
   @Get('google')
