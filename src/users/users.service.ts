@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { FindOptionsSelect, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 type UserEntityKey = keyof UserEntity;
 
@@ -27,10 +27,10 @@ export class UsersService {
     return this.userRepository.findOne({ where: { id }, select: [...select] });
   }
 
-  getOneByEmail(email: string, select?: FindOptionsSelect<UserEntity>) {
+  getOneByEmail(email: string, select: UserEntityKey[]) {
     return this.userRepository.findOne({
       where: { email },
-      select,
+      select: [...select],
     });
   }
 

@@ -1,11 +1,14 @@
 import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { ProviderEnum } from '@/lib/enums/provider.enum';
+import { verificationEmailTemplate } from '@/lib/templates/verify-email.template';
 import { UserEntity } from '@/users/entities/user.entity';
 import { UsersService } from '@/users/users.service';
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +19,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async login({ email, password }: LoginDto) {
@@ -45,7 +49,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const { email, password } = registerDto;
-    const user = await this.usersService.getOneByEmail(email);
+    const user = await this.usersService.getOneByEmail(email, ['email']);
 
     if (user) {
       throw new BadRequestException('User already exist');
@@ -62,6 +66,8 @@ export class AuthService {
     const payload = { email, sub: newUser.id };
     const access_token = await this.jwtService.signAsync(payload);
 
+    await this.sendVerificationEmail(email, access_token);
+
     return {
       access_token,
       email,
@@ -73,7 +79,9 @@ export class AuthService {
       throw new BadRequestException('Unauthenticated');
     }
 
-    const userExists = await this.usersService.getOneByEmail(user.email);
+    const userExists = await this.usersService.getOneByEmail(user.email, [
+      'id',
+    ]);
 
     if (!userExists) {
       const newUser = await this.usersService.create(user);
@@ -103,12 +111,38 @@ export class AuthService {
 
     if (!decoded) throw new UnauthorizedException('User is not logged in');
 
-    const user = this.usersService.getOneByEmail(decoded.email);
+    const user = this.usersService.getOneByEmail(decoded.email, ['email']);
 
     if (!user) {
       throw new UnauthorizedException('User is not logged in');
     }
 
     return user;
+  }
+
+  private async sendVerificationEmail(email: string, token: string) {
+    try {
+      const response = await this.mailerService.sendMail({
+        to: email,
+        subject: 'Confirm your account',
+        html: verificationEmailTemplate(token),
+      });
+
+      if (response.rejected.lenght > 0) {
+        throw new InternalServerErrorException();
+      }
+
+      return {
+        success: 'Check your email to verify your account',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  verifyAccount(id: number) {
+    return this.usersService.update(id, {
+      email_verified: new Date(),
+    });
   }
 }
