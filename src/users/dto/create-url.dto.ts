@@ -15,6 +15,9 @@ export class CreateUserDto {
   @IsOptional()
   password?: string;
 
+  @IsOptional()
+  email_verified?: Date;
+
   @IsNotEmpty()
   provider: ProviderEnum;
 

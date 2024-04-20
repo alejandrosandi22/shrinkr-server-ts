@@ -11,7 +11,8 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { FindOptionsSelect } from 'typeorm';
+
+type UserEntityKey = keyof UserEntity;
 
 @Controller('users')
 export class UsersController {
@@ -22,7 +23,7 @@ export class UsersController {
     @Body()
     body: {
       email: string;
-      select?: FindOptionsSelect<UserEntity>;
+      select: UserEntityKey[];
     },
   ) {
     return this.usersService.getOneByEmail(body.email, body.select);
