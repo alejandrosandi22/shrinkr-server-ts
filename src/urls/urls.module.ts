@@ -16,4 +16,4 @@ Module({
   providers: [URLsService],
   exports: [URLsService],
 });
-export class UrlsModule {}
+export class URLsModule {}
