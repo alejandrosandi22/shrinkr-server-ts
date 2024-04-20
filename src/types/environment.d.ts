@@ -22,6 +22,12 @@ declare global {
 
       CLIENT_APP_URL: string;
       SERVER_APP_URL: string;
+
+      MAIL_HOST: string;
+      MAIL_PORT: number;
+      MAIL_USER: string;
+      MAIL_PASS: string;
+      MAIL_FROM: string;
     }
   }
 }

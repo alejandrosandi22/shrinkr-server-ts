@@ -1,22 +1,26 @@
-import { IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
+import { ProviderEnum } from '@/lib/enums/provider.enum';
+import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
 
-export class CreateUrlDto {
-  @IsNotEmpty()
-  @IsUrl()
-  original_url: string;
-
+export class CreateUserDto {
   @IsOptional()
-  short_url: string;
-
-  @IsOptional()
-  expiration_date: Date;
-
-  @IsOptional()
-  active: boolean;
-
-  @IsOptional()
-  custom_alias?: string | null;
+  avatar?: string;
 
   @IsNotEmpty()
-  user_id: number;
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  name?: string;
+
+  @IsOptional()
+  password?: string;
+
+  @IsOptional()
+  email_verified?: Date;
+
+  @IsNotEmpty()
+  provider: ProviderEnum;
+
+  @IsOptional()
+  current_password?: string;
 }
