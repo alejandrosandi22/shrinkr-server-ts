@@ -33,7 +33,11 @@
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "country-list": "^2.3.0",
     "dotenv": "^16.4.5",
+    "geoip-lite": "^1.4.10",
+    "nanoid": "^5.0.7",
+    "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.13",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
@@ -41,7 +45,8 @@
     "pg": "^8.11.5",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "ua-parser-js": "^1.0.37"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.2.2",
@@ -53,6 +58,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/node-schedule": "^2.1.7",
     "@types/nodemailer": "^6.4.14",
     "@types/passport-facebook": "^3.0.3",
     "@types/passport-google-oauth20": "^2.0.14",
