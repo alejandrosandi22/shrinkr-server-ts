@@ -420,8 +420,11 @@ export class AnalyticsService {
       .createQueryBuilder('analytics')
       .select(`DATE(analytics.created_at) AS date`)
       .addSelect('COUNT(*) AS visits')
-      .where('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'7 days\'')
-      .where('url.short_url = :shortURL', { shortURL })
+      .innerJoin('analytics.url', 'url') // Join with URLEntity
+      .where(
+        '"analytics"."created_at" >= CURRENT_TIMESTAMP - INTERVAL \'7 days\'',
+      )
+      .andWhere('url.short_url = :shortURL', { shortURL }) // Filter by short URL
       .groupBy('DATE(analytics.created_at)')
       .orderBy('DATE(analytics.created_at)', 'ASC')
       .getRawMany();
@@ -429,6 +432,7 @@ export class AnalyticsService {
     const resultMap = new Map<string, number>();
 
     const startDate = new Date(sixDaysAgo);
+
     while (startDate <= currentDate) {
       const formattedDate = startDate.toISOString().slice(0, 10);
       resultMap.set(formattedDate, 0);
