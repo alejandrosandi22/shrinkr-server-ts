@@ -1,5 +1,6 @@
 import { AnalyticsModule } from '@/analytics/analytics.module';
 import { AnalyticsEntity } from '@/analytics/entities/analytics.entity';
+import { AuthModule } from '@/auth/auth.module';
 import { URLEntity } from '@/urls/entities/urls.entity';
 import { URLsModule } from '@/urls/urls.module';
 import { UserEntity } from '@/users/entities/user.entity';
@@ -8,7 +9,6 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +27,10 @@ import { AuthModule } from './auth/auth.module';
       database: process.env.DB_NAME,
       synchronize: true,
       logging: true,
+      cache: {
+        alwaysEnabled: true,
+        duration: 6000,
+      },
     }),
     MailerModule.forRoot({
       transport: {
