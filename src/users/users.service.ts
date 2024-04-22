@@ -24,13 +24,13 @@ export class UsersService {
   }
 
   getOneById(id: number, select: UserEntityKey[]) {
-    return this.userRepository.findOne({ where: { id }, select: [...select] });
+    return this.userRepository.findOne({ where: { id }, select });
   }
 
   getOneByEmail(email: string, select: UserEntityKey[]) {
     return this.userRepository.findOne({
       where: { email },
-      select: [...select],
+      select,
     });
   }
 
