@@ -6,7 +6,7 @@ import { UsersModule } from '@/users/users.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-Module({
+@Module({
   imports: [
     AnalyticsModule,
     UsersModule,
@@ -15,5 +15,5 @@ Module({
   controllers: [URLsController],
   providers: [URLsService],
   exports: [URLsService],
-});
+})
 export class URLsModule {}

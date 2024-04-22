@@ -123,7 +123,6 @@ export class URLsService {
 
       return url;
     } catch (error) {
-      console.error(error);
       throw new BadRequestException();
     }
   }

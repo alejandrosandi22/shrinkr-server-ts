@@ -1,4 +1,7 @@
 import { AuthGuard } from '@/auth/guards/auth.guard';
+import { CreateURLDto } from '@/urls/dto/create-url.dto';
+import { UpdateURLDto } from '@/urls/dto/update-url.dto';
+import { URLsService } from '@/urls/urls.service';
 import {
   Body,
   Controller,
@@ -14,9 +17,6 @@ import * as countryList from 'country-list';
 import { Request } from 'express';
 import * as geoip from 'geoip-lite';
 import * as uaParser from 'ua-parser-js';
-import { CreateURLDto } from './dto/create-url.dto';
-import { UpdateURLDto } from './dto/update-url.dto';
-import { URLsService } from './urls.service';
 
 @Controller('urls')
 export class URLsController {
@@ -41,14 +41,14 @@ export class URLsController {
     ]);
   }
 
-  @Get('user/:id')
+  @Get('get-all/:id')
   @UseGuards(AuthGuard)
   getAllById(@Param('id') id: string) {
     return this.urlsService.getAllById(+id);
   }
 
   @Get('short-url/:url')
-  async getShortUrl(@Param('url') url: string, @Req() req: Request) {
+  async setVisitByShortURL(@Param('url') url: string, @Req() req: Request) {
     function getReferrerName(url: string) {
       const result = new URL(url);
       return result.host.split('.')[1];
