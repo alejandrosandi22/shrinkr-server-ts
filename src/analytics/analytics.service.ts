@@ -106,6 +106,14 @@ export class AnalyticsService {
     };
   }
 
+  /**
+   * Calculates the percentage difference in total visits from the top country between two periods of time.
+   * @param userId The ID of the user for whom the analytics are being retrieved.
+   * @param topCountry The name of the top country for which the difference percentage is being calculated.
+   * @returns The percentage difference in total visits from the top country between the last 30 days and the 30 days prior to that.
+   * If either the total visits from the top country in the previous 30 days or in the last 30 days is 0, returns 0.
+   * If both periods have non-zero visits, calculates the percentage difference and returns it.
+   */
   private async getTopCountryDifferencePercentage(
     userId: number,
     topCountry: string,
@@ -179,6 +187,13 @@ export class AnalyticsService {
     };
   }
 
+  /**
+   * Calculates the percentage difference in visits from a specific referrer between two time periods.
+   * @param userId The ID of the user whose analytics are being analyzed.
+   * @param topReferrer The top referrer for which the percentage difference is calculated.
+   * @returns The percentage difference in visits from the specified referrer between the last 30 days and the 30 days before that.
+   * If either of the total visits for the two time periods is zero, returns 0.
+   */
   private async getReferrerDifferencePercentage(
     userId: number,
     topReferrer: string,
@@ -326,6 +341,13 @@ export class AnalyticsService {
     return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
   }
 
+  /**
+   * Retrieves analytics data for a given short URL.
+   * @param shortURL The short URL for which analytics data is requested.
+   * @returns An object containing various analytics data such as total visits, unique visitors,
+   * return visitors, device usage, platform usage, referrer sources, browser usage, visits by country,
+   * more active days, and performance data for the last 7 days.
+   */
   async getAnalyticsByShortURL(shortURL: string) {
     const mainStatsResult = await this.analyticsRepository
       .createQueryBuilder('analytics')
