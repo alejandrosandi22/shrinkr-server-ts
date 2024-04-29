@@ -29,6 +29,19 @@ export class UsersController {
     return this.usersService.getOneByEmail(body.email, body.select);
   }
 
+  @Post('support')
+  support(
+    @Body()
+    body: {
+      name: string;
+      email: string;
+      reason: string;
+      message: string;
+    },
+  ) {
+    return this.usersService.supportMail(body);
+  }
+
   @Patch('update/:id')
   @UseGuards(AuthGuard)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
