@@ -28,6 +28,7 @@ declare global {
       MAIL_USER: string;
       MAIL_PASS: string;
       MAIL_FROM: string;
+      MAIL_EMAIL: string;
     }
   }
 }
