@@ -1,6 +1,7 @@
 import { CreateUserDto } from '@/users/dto/create-url.dto';
 import { UpdateUserDto } from '@/users/dto/update-url.dto';
 import { UserEntity } from '@/users/entities/user.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
@@ -17,6 +18,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly mailerService: MailerService,
   ) {}
 
   create(createUserDto: CreateUserDto) {
@@ -45,6 +47,39 @@ export class UsersService {
     return this.userRepository.findOne({
       where: { id },
       relations: ['urls'],
+    });
+  }
+
+  async resetPassword(email: string, password: string) {
+    const user = await this.getOneByEmail(email, ['id']);
+
+    if (!user) {
+      throw new BadRequestException("User doesn't exist");
+    }
+
+    const hashPassword = await bcrypt.hash(password, 12);
+
+    return this.userRepository.update(user.id, {
+      password: hashPassword,
+    });
+  }
+
+  supportMail({
+    name,
+    email,
+    reason,
+    message,
+  }: {
+    name: string;
+    email: string;
+    reason: string;
+    message: string;
+  }) {
+    return this.mailerService.sendMail({
+      from: email,
+      to: process.env.MAIL_EMAIL,
+      subject: `Message from ${name} <${email}>: ${reason}`,
+      text: message,
     });
   }
 

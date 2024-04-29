@@ -1,6 +1,7 @@
 import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { ProviderEnum } from '@/lib/enums/provider.enum';
+import { recoveryPasswordTemplate } from '@/lib/templates/recovery-password.template';
 import { verificationEmailTemplate } from '@/lib/templates/verify-email.template';
 import { UserEntity } from '@/users/entities/user.entity';
 import { UsersService } from '@/users/users.service';
@@ -104,6 +105,21 @@ export class AuthService {
 
     const jwt = this.jwtService.sign(payload);
     return { access_token: jwt };
+  }
+
+  resetPassword(email: string, newPassword: string) {
+    return this.usersService.resetPassword(email, newPassword);
+  }
+
+  async sendRecoveryPassword(email: string) {
+    const payload = { email };
+    const token = await this.jwtService.signAsync(payload);
+
+    return this.mailerService.sendMail({
+      to: email,
+      subject: 'Reset your password',
+      html: recoveryPasswordTemplate(token),
+    });
   }
 
   async isAuthenticated(access_token: string) {

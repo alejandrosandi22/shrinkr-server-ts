@@ -18,6 +18,9 @@ export class AnalyticsEntity {
   device: string;
 
   @Column()
+  vendor: string;
+
+  @Column()
   platforms: string;
 
   @Column()
