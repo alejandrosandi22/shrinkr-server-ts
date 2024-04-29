@@ -10,13 +10,8 @@ import {
   Param,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
-import * as countryList from 'country-list';
-import { Request } from 'express';
-import * as geoip from 'geoip-lite';
-import * as uaParser from 'ua-parser-js';
 
 @Controller('urls')
 export class URLsController {
@@ -41,45 +36,23 @@ export class URLsController {
     ]);
   }
 
+  @Get('get-url/:url')
+  getOriginalURL(@Param('url') url: string) {
+    return this.urlsService.getURLByShortURL(url, [
+      'original_url',
+      'short_url',
+    ]);
+  }
+
   @Get('get-all/:id')
   @UseGuards(AuthGuard)
   getAllById(@Param('id') id: string) {
     return this.urlsService.getAllById(+id);
   }
 
-  @Get('short-url/:url')
-  async setVisitByShortURL(@Param('url') url: string, @Req() req: Request) {
-    function getReferrerName(url: string) {
-      const result = new URL(url);
-      return result.host.split('.')[1];
-    }
-
-    const userAgent = req.get('User-Agent');
-    const ip = req.headers['x-forwarded-for'] ?? '212.47.230.124'; // Fixed ip for development
-    const parsedUserAgent = uaParser(userAgent);
-
-    const countryCode = geoip.lookup(ip as string).country;
-
-    const browser = parsedUserAgent.browser.name ?? 'other';
-    const platforms = parsedUserAgent.os.name ?? 'other'; // operative system
-    const device = req.device.type; // phone, tablet, pc
-    const referrer = req.headers?.referer
-      ? getReferrerName(req.headers?.referer)
-      : 'direct search';
-    const location = countryList.getName(countryCode);
-
-    const payload = {
-      device,
-      browser,
-      referrer,
-      platforms,
-      location,
-      ip,
-      short_url: url,
-    };
-
-    const response = await this.urlsService.setVisitByShortURL(payload);
-    return response;
+  @Post('short-url/:url')
+  setVisitByShortURL(@Body() body: any, @Param('url') shortURL: string) {
+    return this.urlsService.setVisitByShortURL({ ...body, shortURL });
   }
 
   @Patch('update/:id')
