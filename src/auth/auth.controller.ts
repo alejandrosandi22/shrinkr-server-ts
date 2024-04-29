@@ -37,6 +37,16 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Post('reset')
+  resetPassword(@Body() body: { email: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.newPassword);
+  }
+
+  @Post('recovery')
+  sendRecoveryPassword(@Body() body: { email: string }) {
+    return this.authService.sendRecoveryPassword(body.email);
+  }
+
   @Post('verify-account/:id')
   verifyAccount(@Param('id') id: string) {
     return this.authService.verifyAccount(+id);
