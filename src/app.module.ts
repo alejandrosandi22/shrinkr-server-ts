@@ -1,6 +1,7 @@
 import { AnalyticsModule } from '@/analytics/analytics.module';
 import { AnalyticsEntity } from '@/analytics/entities/analytics.entity';
 import { AuthModule } from '@/auth/auth.module';
+import { HealthModule } from '@/health/health.module';
 import { URLEntity } from '@/urls/entities/urls.entity';
 import { URLsModule } from '@/urls/urls.module';
 import { UserEntity } from '@/users/entities/user.entity';
@@ -58,6 +59,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     URLsModule,
     AnalyticsModule,
     AuthModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [
