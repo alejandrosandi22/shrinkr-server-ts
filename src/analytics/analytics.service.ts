@@ -177,6 +177,14 @@ export class AnalyticsService {
       .limit(1)
       .getRawOne();
 
+    if (!countThirtyDaysAgo) {
+      return {
+        title: 'Top country',
+        value: '',
+        difference: 0,
+      };
+    }
+
     return {
       title: 'Top country',
       value: countThirtyDaysAgo.location,
@@ -304,6 +312,7 @@ export class AnalyticsService {
           .orderBy('analytics.location, COUNT(*)', 'DESC');
       }, 'cv')
       .orderBy('cv.country, cv.visits', 'DESC')
+      .limit(4)
       .getRawMany();
 
     return result;
@@ -338,7 +347,12 @@ export class AnalyticsService {
       .limit(4)
       .getRawMany();
 
-    return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
+    const response = result.map(({ name, value }) => ({
+      name,
+      value: parseInt(value),
+    }));
+    console.log(response);
+    return response;
   }
 
   /**
@@ -381,6 +395,7 @@ export class AnalyticsService {
       .where('url.short_url = :shortURL', { shortURL })
       .groupBy('analytics.device')
       .orderBy('value', 'DESC')
+      .limit(5)
       .getRawMany();
 
     const platforms = await this.analyticsRepository
@@ -391,6 +406,7 @@ export class AnalyticsService {
       .where('url.short_url = :shortURL', { shortURL })
       .groupBy('analytics.platforms')
       .orderBy('value', 'DESC')
+      .limit(5)
       .getRawMany();
 
     const referrers = await this.analyticsRepository
@@ -401,6 +417,7 @@ export class AnalyticsService {
       .where('url.short_url = :shortURL', { shortURL })
       .groupBy('analytics.referrer')
       .orderBy('value', 'DESC')
+      .limit(5)
       .getRawMany();
 
     const browsers = await this.analyticsRepository
@@ -411,6 +428,7 @@ export class AnalyticsService {
       .where('url.short_url = :shortURL', { shortURL })
       .groupBy('analytics.browser')
       .orderBy('value', 'DESC')
+      .limit(5)
       .getRawMany();
 
     const visits_by_country = await this.analyticsRepository
@@ -421,6 +439,7 @@ export class AnalyticsService {
       .where('url.short_url = :shortURL', { shortURL })
       .groupBy('analytics.location')
       .orderBy('value', 'DESC')
+      .limit(5)
       .getRawMany();
 
     const currentDate = new Date();
@@ -442,11 +461,11 @@ export class AnalyticsService {
       .createQueryBuilder('analytics')
       .select(`DATE(analytics.created_at) AS date`)
       .addSelect('COUNT(*) AS visits')
-      .innerJoin('analytics.url', 'url') // Join with URLEntity
+      .innerJoin('analytics.url', 'url')
       .where(
         '"analytics"."created_at" >= CURRENT_TIMESTAMP - INTERVAL \'7 days\'',
       )
-      .andWhere('url.short_url = :shortURL', { shortURL }) // Filter by short URL
+      .andWhere('url.short_url = :shortURL', { shortURL })
       .groupBy('DATE(analytics.created_at)')
       .orderBy('DATE(analytics.created_at)', 'ASC')
       .getRawMany();
