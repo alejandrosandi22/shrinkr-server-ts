@@ -17,6 +17,6 @@ export class CreateURLDto {
   @IsOptional()
   custom_alias?: string | null;
 
-  @IsNotEmpty()
+  @IsOptional()
   user_id: number;
 }

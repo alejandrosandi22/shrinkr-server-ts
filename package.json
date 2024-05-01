@@ -30,6 +30,7 @@
     "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/throttler": "^5.1.2",
     "@nestjs/typeorm": "^10.0.2",
     "axios": "^1.6.8",
     "bcryptjs": "^2.4.3",

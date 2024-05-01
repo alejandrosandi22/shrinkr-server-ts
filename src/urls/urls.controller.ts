@@ -19,8 +19,13 @@ export class URLsController {
 
   @Post('create')
   @UseGuards(AuthGuard)
-  async create(@Body() createURLDto: CreateURLDto) {
-    return await this.urlsService.create(createURLDto);
+  create(@Body() createURLDto: CreateURLDto) {
+    return this.urlsService.create(createURLDto);
+  }
+
+  @Post('shorten')
+  shorten(@Body() createURLDto: CreateURLDto) {
+    return this.urlsService.shorten(createURLDto);
   }
 
   @Get(':url')
