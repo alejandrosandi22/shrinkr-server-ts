@@ -40,7 +40,10 @@ export class URLEntity {
   @UpdateDateColumn({ type: 'timestamp with time zone' })
   updated_at!: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.urls, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (user) => user.urls, {
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 

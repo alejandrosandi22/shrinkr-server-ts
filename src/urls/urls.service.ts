@@ -90,6 +90,28 @@ export class URLsService {
     return newUrl;
   }
 
+  async shorten(createURLDto: CreateURLDto) {
+    const nanoid = customAlphabet(alphabet, 6);
+
+    if (!createURLDto.expiration_date)
+      throw new BadRequestException('Expiration date should be provided');
+
+    const payload = {
+      ...createURLDto,
+      short_url: nanoid(),
+    };
+
+    const newUrl = await this.urlRepository.save({
+      ...payload,
+    });
+
+    schedule.scheduleJob(createURLDto.expiration_date, async () => {
+      await this.urlRepository.delete(newUrl.id);
+    });
+
+    return newUrl;
+  }
+
   /**
    * Retrieves a URL entity from the database by its short URL.
    * @param short_url The short URL of the entity to retrieve.
