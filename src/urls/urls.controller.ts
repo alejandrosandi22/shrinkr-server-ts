@@ -1,7 +1,3 @@
-import { AuthGuard } from '@/auth/guards/auth.guard';
-import { CreateURLDto } from '@/urls/dto/create-url.dto';
-import { UpdateURLDto } from '@/urls/dto/update-url.dto';
-import { URLsService } from '@/urls/urls.service';
 import {
   Body,
   Controller,
@@ -12,6 +8,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { CreateURLDto } from './dto/create-url.dto';
+import { UpdateURLDto } from './dto/update-url.dto';
+import { URLsService } from './urls.service';
 
 @Controller('urls')
 export class URLsController {

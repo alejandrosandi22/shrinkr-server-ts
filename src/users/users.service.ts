@@ -1,6 +1,3 @@
-import { CreateUserDto } from '@/users/dto/create-url.dto';
-import { UpdateUserDto } from '@/users/dto/update-url.dto';
-import { UserEntity } from '@/users/entities/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
@@ -10,6 +7,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-url.dto';
+import { UpdateUserDto } from './dto/update-url.dto';
+import { UserEntity } from './entities/user.entity';
 
 type UserEntityKey = keyof UserEntity;
 

@@ -1,8 +1,3 @@
-import { AnalyticsService } from '@/analytics/analytics.service';
-import { CreateURLDto } from '@/urls/dto/create-url.dto';
-import { UpdateURLDto } from '@/urls/dto/update-url.dto';
-import { URLEntity } from '@/urls/entities/urls.entity';
-import { UsersService } from '@/users/users.service';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +7,11 @@ import * as geoip from 'geoip-lite';
 import { customAlphabet } from 'nanoid';
 import * as schedule from 'node-schedule';
 import { Repository } from 'typeorm';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { UsersService } from '../users/users.service';
+import { CreateURLDto } from './dto/create-url.dto';
+import { UpdateURLDto } from './dto/update-url.dto';
+import { URLEntity } from './entities/urls.entity';
 
 type URLEntityKey = keyof URLEntity;
 

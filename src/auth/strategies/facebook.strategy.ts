@@ -1,7 +1,7 @@
-import { ProviderEnum } from '@/lib/enums/provider.enum';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-facebook';
+import { ProviderEnum } from '../../lib/enums/provider.enum';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
