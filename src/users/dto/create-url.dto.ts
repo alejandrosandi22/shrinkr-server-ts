@@ -1,5 +1,5 @@
-import { ProviderEnum } from '@/lib/enums/provider.enum';
 import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
+import { ProviderEnum } from '../../lib/enums/provider.enum';
 
 export class CreateUserDto {
   @IsOptional()

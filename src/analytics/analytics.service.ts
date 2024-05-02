@@ -1,9 +1,9 @@
-import { CreateAnalyticsDto } from '@/analytics/dto/create-analytics.dto';
-import { AnalyticsEntity } from '@/analytics/entities/analytics.entity';
-import { URLEntity } from '@/urls/entities/urls.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, MoreThanOrEqual, Repository } from 'typeorm';
+import { URLEntity } from '../urls/entities/urls.entity';
+import { CreateAnalyticsDto } from './dto/create-analytics.dto';
+import { AnalyticsEntity } from './entities/analytics.entity';
 
 @Injectable()
 export class AnalyticsService {

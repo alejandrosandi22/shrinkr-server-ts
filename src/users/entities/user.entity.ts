@@ -1,6 +1,3 @@
-import { PlansEnum } from '@/lib/enums/plans.enum';
-import { ProviderEnum } from '@/lib/enums/provider.enum';
-import { URLEntity } from '@/urls/entities/urls.entity';
 import {
   Column,
   CreateDateColumn,
@@ -9,6 +6,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { PlansEnum } from '../../lib/enums/plans.enum';
+import { ProviderEnum } from '../../lib/enums/provider.enum';
+import { URLEntity } from '../../urls/entities/urls.entity';
 
 @Entity('users')
 export class UserEntity {

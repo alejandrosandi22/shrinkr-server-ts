@@ -1,7 +1,3 @@
-import { AuthGuard } from '@/auth/guards/auth.guard';
-import { UpdateUserDto } from '@/users/dto/update-url.dto';
-import { UserEntity } from '@/users/entities/user.entity';
-import { UsersService } from '@/users/users.service';
 import {
   Body,
   Controller,
@@ -11,6 +7,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { UpdateUserDto } from './dto/update-url.dto';
+import { UserEntity } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 type UserEntityKey = keyof UserEntity;
 

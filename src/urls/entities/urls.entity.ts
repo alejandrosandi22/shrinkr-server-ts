@@ -1,5 +1,3 @@
-import { AnalyticsEntity } from '@/analytics/entities/analytics.entity';
-import { UserEntity } from '@/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -10,6 +8,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AnalyticsEntity } from '../../analytics/entities/analytics.entity';
+import { UserEntity } from '../../users/entities/user.entity';
 
 @Entity('urls')
 export class URLEntity {
