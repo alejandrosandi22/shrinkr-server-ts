@@ -1,7 +1,5 @@
-import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AxiosResponse } from 'axios';
 import * as countryList from 'country-list';
 import * as geoip from 'geoip-lite';
 import { customAlphabet } from 'nanoid';
@@ -25,7 +23,6 @@ export class URLsService {
     private readonly urlRepository: Repository<URLEntity>,
     private readonly usersService: UsersService,
     private readonly analyticsService: AnalyticsService,
-    private readonly httpService: HttpService,
   ) {}
 
   async create(createURLDto: CreateURLDto) {
@@ -132,29 +129,9 @@ export class URLsService {
       order: { request_count: { direction: 'DESC' } },
     });
   }
-
-  /**
-   * Fetches the public IP address using the ipify API.
-   * @returns A Promise that resolves to an AxiosResponse containing the public IP address.
-   * @throws An Error if the request to the ipify API fails, including details from the response.
-   */
-  private async getPublicIp(): Promise<AxiosResponse<{ ip: string }>> {
-    return this.httpService.axiosRef
-      .get(`https://api.ipify.org?format=json`)
-      .then((res) => res)
-      .catch((err) => {
-        throw new Error(
-          err?.message + ': ' + JSON.stringify(err?.response?.data),
-        );
-      });
-  }
-
   async setVisitByShortURL(payload: any) {
     try {
-      const response = await this.getPublicIp();
-      const ip = response.data.ip;
-
-      const geo = geoip.lookup(ip);
+      const geo = geoip.lookup(payload.ip);
       const location = countryList.getName(geo.country);
 
       const url = await this.urlRepository.findOne({
@@ -173,7 +150,7 @@ export class URLsService {
       await this.urlRepository.update(url.id, {
         request_count: ++url.request_count,
       });
-      await this.analyticsService.create({ ...payload, location, ip }, url);
+      await this.analyticsService.create({ ...payload, location }, url);
 
       return url;
     } catch (error) {
