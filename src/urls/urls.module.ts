@@ -1,4 +1,3 @@
-import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnalyticsModule } from '../analytics/analytics.module';
@@ -9,7 +8,6 @@ import { URLsService } from './urls.service';
 
 @Module({
   imports: [
-    HttpModule,
     AnalyticsModule,
     UsersModule,
     TypeOrmModule.forFeature([URLEntity]),
