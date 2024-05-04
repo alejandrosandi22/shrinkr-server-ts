@@ -1,12 +1,17 @@
-import { URLEntity } from '@/urls/entities/urls.entity';
-import { URLsController } from '@/urls/urls.controller';
-import { URLsService } from '@/urls/urls.service';
-import { UsersModule } from '@/users/users.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AnalyticsModule } from '../analytics/analytics.module';
+import { UsersModule } from '../users/users.module';
+import { URLEntity } from './entities/urls.entity';
+import { URLsController } from './urls.controller';
+import { URLsService } from './urls.service';
 
 @Module({
-  imports: [UsersModule, TypeOrmModule.forFeature([URLEntity])],
+  imports: [
+    AnalyticsModule,
+    UsersModule,
+    TypeOrmModule.forFeature([URLEntity]),
+  ],
   controllers: [URLsController],
   providers: [URLsService],
   exports: [URLsService],

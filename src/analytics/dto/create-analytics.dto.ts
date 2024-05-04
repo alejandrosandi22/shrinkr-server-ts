@@ -14,5 +14,5 @@ export class CreateAnalyticsDto {
   browser: string;
 
   @IsNotEmpty()
-  country: string;
+  location: string;
 }
