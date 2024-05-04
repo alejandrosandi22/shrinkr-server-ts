@@ -1,9 +1,3 @@
-import { AuthService } from '@/auth/auth.service';
-import { LoginDto } from '@/auth/dto/login.dto';
-import { RegisterDto } from '@/auth/dto/register.dto';
-import { AuthGuard } from '@/auth/guards/auth.guard';
-import { FacebookGuard } from '@/auth/guards/facebook.guard';
-import { GoogleOauthGuard } from '@/auth/guards/google-oauth.guard';
 import {
   Body,
   Controller,
@@ -15,6 +9,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { AuthGuard } from './guards/auth.guard';
+import { FacebookGuard } from './guards/facebook.guard';
+import { GoogleOauthGuard } from './guards/google-oauth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -35,6 +35,16 @@ export class AuthController {
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('reset')
+  resetPassword(@Body() body: { email: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.newPassword);
+  }
+
+  @Post('recovery')
+  sendRecoveryPassword(@Body() body: { email: string }) {
+    return this.authService.sendRecoveryPassword(body.email);
   }
 
   @Post('verify-account/:id')

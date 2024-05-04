@@ -1,18 +1,17 @@
-import { AnalyticsService } from '@/analytics/analytics.service';
-import { CreateAnalyticsDto } from '@/analytics/dto/create-analytics.dto';
-import { CreateURLDto } from '@/urls/dto/create-url.dto';
-import { UpdateURLDto } from '@/urls/dto/update-url.dto';
-import { URLEntity } from '@/urls/entities/urls.entity';
-import { UsersService } from '@/users/users.service';
+import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AxiosResponse } from 'axios';
+import * as countryList from 'country-list';
+import * as geoip from 'geoip-lite';
 import { customAlphabet } from 'nanoid';
 import * as schedule from 'node-schedule';
 import { Repository } from 'typeorm';
-
-interface SetAnalyticsModel extends CreateAnalyticsDto {
-  short_url: string;
-}
+import { AnalyticsService } from '../analytics/analytics.service';
+import { UsersService } from '../users/users.service';
+import { CreateURLDto } from './dto/create-url.dto';
+import { UpdateURLDto } from './dto/update-url.dto';
+import { URLEntity } from './entities/urls.entity';
 
 type URLEntityKey = keyof URLEntity;
 
@@ -26,6 +25,7 @@ export class URLsService {
     private readonly urlRepository: Repository<URLEntity>,
     private readonly usersService: UsersService,
     private readonly analyticsService: AnalyticsService,
+    private readonly httpService: HttpService,
   ) {}
 
   async create(createURLDto: CreateURLDto) {
@@ -90,8 +90,40 @@ export class URLsService {
     return newUrl;
   }
 
+  async shorten(createURLDto: CreateURLDto) {
+    const nanoid = customAlphabet(alphabet, 6);
+
+    if (!createURLDto.expiration_date)
+      throw new BadRequestException('Expiration date should be provided');
+
+    const payload = {
+      ...createURLDto,
+      short_url: nanoid(),
+    };
+
+    const newUrl = await this.urlRepository.save({
+      ...payload,
+    });
+
+    schedule.scheduleJob(createURLDto.expiration_date, async () => {
+      await this.urlRepository.delete(newUrl.id);
+    });
+
+    return newUrl;
+  }
+
+  /**
+   * Retrieves a URL entity from the database by its short URL.
+   * @param short_url The short URL of the entity to retrieve.
+   * @param select An array specifying which fields of the URL entity to select.
+   * @returns A Promise that resolves to the URL entity matching the provided short URL,
+   * with fields specified by the 'select' parameter.
+   */
   async getURLByShortURL(short_url: string, select: URLEntityKey[]) {
-    return await this.urlRepository.findOne({ where: { short_url }, select });
+    return await this.urlRepository.findOne({
+      where: { short_url },
+      select,
+    });
   }
 
   getAllById(id: number) {
@@ -101,10 +133,32 @@ export class URLsService {
     });
   }
 
-  async setVisitByShortURL(payload: SetAnalyticsModel) {
+  /**
+   * Fetches the public IP address using the ipify API.
+   * @returns A Promise that resolves to an AxiosResponse containing the public IP address.
+   * @throws An Error if the request to the ipify API fails, including details from the response.
+   */
+  private async getPublicIp(): Promise<AxiosResponse<{ ip: string }>> {
+    return this.httpService.axiosRef
+      .get(`https://api.ipify.org?format=json`)
+      .then((res) => res)
+      .catch((err) => {
+        throw new Error(
+          err?.message + ': ' + JSON.stringify(err?.response?.data),
+        );
+      });
+  }
+
+  async setVisitByShortURL(payload: any) {
     try {
+      const response = await this.getPublicIp();
+      const ip = response.data.ip;
+
+      const geo = geoip.lookup(ip);
+      const location = countryList.getName(geo.country);
+
       const url = await this.urlRepository.findOne({
-        where: { short_url: payload.short_url },
+        where: { short_url: payload.shortURL },
         cache: true,
       });
 
@@ -119,11 +173,10 @@ export class URLsService {
       await this.urlRepository.update(url.id, {
         request_count: ++url.request_count,
       });
-      await this.analyticsService.create(payload, url);
+      await this.analyticsService.create({ ...payload, location, ip }, url);
 
       return url;
     } catch (error) {
-      console.error(error);
       throw new BadRequestException();
     }
   }

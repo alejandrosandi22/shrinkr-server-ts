@@ -1,4 +1,3 @@
-import { URLEntity } from '@/urls/entities/urls.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { URLEntity } from '../../urls/entities/urls.entity';
 
 @Entity('analytics')
 export class AnalyticsEntity {
@@ -16,6 +16,9 @@ export class AnalyticsEntity {
 
   @Column()
   device: string;
+
+  @Column()
+  vendor: string;
 
   @Column()
   platforms: string;
