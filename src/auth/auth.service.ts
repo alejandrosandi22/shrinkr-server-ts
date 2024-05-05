@@ -39,7 +39,12 @@ export class AuthService {
       throw new UnauthorizedException('Incorrect password');
     }
 
-    const payload = { email: user.email, sub: user.id };
+    const payload = {
+      name: user.name,
+      email: user.email,
+      sub: user.id,
+      avatar: user.avatar,
+    };
     const access_token = await this.jwtService.signAsync(payload);
 
     return {
@@ -88,9 +93,10 @@ export class AuthService {
       const newUser = await this.usersService.create(user);
 
       const payload = {
-        email: newUser.email,
         name: newUser.name,
+        email: newUser.email,
         sub: newUser.id,
+        avatar: newUser.avatar,
       };
 
       const jwt = this.jwtService.sign(payload);
@@ -100,6 +106,7 @@ export class AuthService {
     const payload = {
       email: user.email,
       name: user.name,
+      avatar: user.avatar,
       sub: userExists.id,
     };
 
