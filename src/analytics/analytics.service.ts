@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { URLEntity } from '../urls/entities/urls.entity';
 import { CreateAnalyticsDto } from './dto/create-analytics.dto';
 import { AnalyticsEntity } from './entities/analytics.entity';
@@ -12,64 +12,24 @@ export class AnalyticsService {
     private readonly analyticsRepository: Repository<AnalyticsEntity>,
   ) {}
 
-  create(createAnalyticsDto: CreateAnalyticsDto, url: URLEntity) {
+  async create(createAnalyticsDto: CreateAnalyticsDto, url: URLEntity) {
     return this.analyticsRepository.save({
       ...createAnalyticsDto,
       url,
     });
   }
 
-  async countUniqueVisitsLastThirtyDays(id: number) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-    const uniqueVisitsLastThirtyDays = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('COUNT(DISTINCT analytics.ip)', 'unique_visits_last_thirty_days')
-      .where(
-        `analytics.url_id IN (SELECT id FROM urls WHERE "user_id" = ${id})`,
-      )
-      .andWhere(`analytics.created_at >= :thirtyDaysAgo`, {
-        thirtyDaysAgo,
-      })
-      .getRawOne();
-
-    const uniqueVisitsLastSixtyDays = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('COUNT(DISTINCT analytics.ip)', 'unique_visits_last_sixty_days')
-      .where(
-        `analytics."url_id" IN (SELECT id FROM urls WHERE "user_id" = ${id})`,
-      )
-      .andWhere(
-        'analytics."created_at" >= CURRENT_TIMESTAMP - INTERVAL \'60 days\'',
-      )
-      .andWhere(
-        'analytics."created_at" < CURRENT_TIMESTAMP - INTERVAL \'30 days\'',
-      )
-      .getRawOne();
-
-    const { unique_visits_last_thirty_days } = uniqueVisitsLastThirtyDays;
-    const { unique_visits_last_sixty_days } = uniqueVisitsLastSixtyDays;
-
-    let growthPercentage: number =
-      ((unique_visits_last_thirty_days - unique_visits_last_sixty_days) /
-        unique_visits_last_sixty_days) *
-      100;
-
-    if (
-      Number(unique_visits_last_thirty_days) === 0 ||
-      Number(unique_visits_last_sixty_days) === 0
-    )
-      growthPercentage = 0;
-
-    return {
-      title: 'Unique visits',
-      value: unique_visits_last_thirty_days,
-      difference: growthPercentage,
-    };
+  private async countVisitsInPeriod(
+    id: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    return this.analyticsRepository.count({
+      where: {
+        url: { user: { id } },
+        created_at: Between(startDate, endDate),
+      },
+    });
   }
 
   async countVisitsLastThirtyDays(id: number) {
@@ -79,25 +39,23 @@ export class AnalyticsService {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-    const countThirtyDaysAgo = await this.analyticsRepository.count({
-      where: {
-        url: { user: { id } },
-        created_at: MoreThanOrEqual(thirtyDaysAgo),
-      },
-    });
+    const countThirtyDaysAgo = await this.countVisitsInPeriod(
+      id,
+      thirtyDaysAgo,
+      new Date(),
+    );
 
-    const countSixtyDaysAgo: number = await this.analyticsRepository.count({
-      where: {
-        url: { user: { id } },
-        created_at: Between(sixtyDaysAgo, thirtyDaysAgo),
-      },
-    });
+    const countSixtyDaysAgo = await this.countVisitsInPeriod(
+      id,
+      sixtyDaysAgo,
+      thirtyDaysAgo,
+    );
 
-    let growthPercentage: number =
-      ((countThirtyDaysAgo - countSixtyDaysAgo) / countSixtyDaysAgo) * 100;
-
-    if (countThirtyDaysAgo === 0 || countSixtyDaysAgo === 0)
-      growthPercentage = 0;
+    let growthPercentage = 0;
+    if (countSixtyDaysAgo !== 0) {
+      growthPercentage =
+        ((countThirtyDaysAgo - countSixtyDaysAgo) / countSixtyDaysAgo) * 100;
+    }
 
     return {
       title: 'Visits',
@@ -106,192 +64,281 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Calculates the percentage difference in total visits from the top country between two periods of time.
-   * @param userId The ID of the user for whom the analytics are being retrieved.
-   * @param topCountry The name of the top country for which the difference percentage is being calculated.
-   * @returns The percentage difference in total visits from the top country between the last 30 days and the 30 days prior to that.
-   * If either the total visits from the top country in the previous 30 days or in the last 30 days is 0, returns 0.
-   * If both periods have non-zero visits, calculates the percentage difference and returns it.
-   */
+  private async countUniqueVisitsInPeriod(
+    id: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const result = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('COUNT(DISTINCT analytics.ip)', 'unique_visits')
+      .where(
+        'analytics.url_id IN (SELECT id FROM urls WHERE "user_id" = :id)',
+        { id },
+      )
+      .andWhere('analytics.created_at BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .getRawOne();
+
+    return result.unique_visits;
+  }
+
+  async countUniqueVisitsLastThirtyDays(id: number) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const uniqueVisitsLastThirtyDays = await this.countUniqueVisitsInPeriod(
+      id,
+      thirtyDaysAgo,
+      new Date(),
+    );
+    const uniqueVisitsLastSixtyDays = await this.countUniqueVisitsInPeriod(
+      id,
+      sixtyDaysAgo,
+      thirtyDaysAgo,
+    );
+
+    let growthPercentage = 0;
+    if (uniqueVisitsLastSixtyDays !== 0) {
+      growthPercentage =
+        ((uniqueVisitsLastThirtyDays - uniqueVisitsLastSixtyDays) /
+          uniqueVisitsLastSixtyDays) *
+        100;
+    }
+
+    return {
+      title: 'Unique visits',
+      value: uniqueVisitsLastThirtyDays,
+      difference: growthPercentage ? growthPercentage : 0,
+    };
+  }
+
   private async getTopCountryDifferencePercentage(
     userId: number,
     topCountry: string,
   ) {
-    const thirtyDaysAgo = await this.analyticsRepository
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const previousThirtyDays = new Date();
+    previousThirtyDays.setDate(previousThirtyDays.getDate() - 60);
+
+    const totalVisitsThirtyDaysAgo = await this.analyticsRepository
       .createQueryBuilder('analytics')
-      .select(
-        'SUM(CASE WHEN (analytics.location) LIKE :location THEN 1 ELSE 0 END)',
-        'total_visits_thirty_days_ago',
-      )
-      .andWhere('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .setParameter('location', topCountry)
-      .getRawOne();
-
-    const previousThirtyDays = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select(
-        'SUM(CASE WHEN (analytics.location) LIKE :location THEN 1 ELSE 0 END)',
-        'total_visits_previous_thirty_days',
-      )
-      .andWhere('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'60 days\'')
-      .andWhere('"created_at" < CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .setParameter('location', topCountry)
-      .getRawOne();
-
-    const { total_visits_thirty_days_ago } = thirtyDaysAgo;
-    const { total_visits_previous_thirty_days } = previousThirtyDays;
-
-    const totalVisitsThirtyDaysAgo = Number(total_visits_thirty_days_ago);
-    const totalVisitsPreviousThirtyDays = Number(
-      total_visits_previous_thirty_days,
-    );
-
-    if (totalVisitsPreviousThirtyDays === 0 || totalVisitsThirtyDaysAgo === 0)
-      return 0;
-
-    const differencePercentage =
-      ((totalVisitsThirtyDaysAgo - totalVisitsPreviousThirtyDays) /
-        totalVisitsPreviousThirtyDays) *
-      100;
-
-    return differencePercentage;
-  }
-
-  async getTopCountryOfLastThirtyDays(userId: number) {
-    const countThirtyDaysAgo = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('analytics.location', 'location')
+      .select('COUNT(*)', 'total_visits_thirty_days_ago')
       .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
         userId,
       })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
+      .andWhere('"created_at" >= :thirtyDaysAgo', { thirtyDaysAgo })
+      .andWhere('analytics.location LIKE :topCountry', {
+        topCountry: `%${topCountry}%`,
+      })
+      .getRawOne();
+
+    const totalVisitsPreviousThirtyDays = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('COUNT(*)', 'total_visits_previous_thirty_days')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('"created_at" >= :previousThirtyDays', { previousThirtyDays })
+      .andWhere('"created_at" < :thirtyDaysAgo', { thirtyDaysAgo })
+      .andWhere('analytics.location LIKE :topCountry', {
+        topCountry: `%${topCountry}%`,
+      })
+      .getRawOne();
+
+    const { total_visits_thirty_days_ago } = totalVisitsThirtyDaysAgo;
+    const { total_visits_previous_thirty_days } = totalVisitsPreviousThirtyDays;
+
+    const totalVisits30Days = Number(total_visits_thirty_days_ago);
+    const totalVisitsPrev30Days = Number(total_visits_previous_thirty_days);
+
+    if (totalVisitsPrev30Days === 0 || totalVisits30Days === 0) return 0;
+
+    return (
+      ((totalVisits30Days - totalVisitsPrev30Days) / totalVisitsPrev30Days) *
+      100
+    );
+  }
+
+  private async getTopCountryOfLastThirtyDays(userId: number) {
+    const topCountryResult = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('analytics.location', 'location')
+      .addSelect('COUNT(*)', 'visits')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('analytics.created_at >= :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(
+          new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+        ),
+      })
       .groupBy('analytics.location')
-      .orderBy('COUNT(*)', 'DESC')
+      .orderBy('visits', 'DESC')
       .limit(1)
       .getRawOne();
 
-    if (!countThirtyDaysAgo) {
-      return {
-        title: 'Top country',
-        value: '',
-        difference: 0,
-      };
-    }
+    const topCountry = topCountryResult ? topCountryResult.location : '';
+    const difference = await this.getTopCountryDifferencePercentage(
+      userId,
+      topCountry,
+    );
 
     return {
       title: 'Top country',
-      value: countThirtyDaysAgo.location,
-      difference: await this.getTopCountryDifferencePercentage(
-        userId,
-        countThirtyDaysAgo.location,
-      ),
+      value: topCountry !== '' ? topCountry : 'N/D',
+      difference,
     };
   }
 
-  /**
-   * Calculates the percentage difference in visits from a specific referrer between two time periods.
-   * @param userId The ID of the user whose analytics are being analyzed.
-   * @param topReferrer The top referrer for which the percentage difference is calculated.
-   * @returns The percentage difference in visits from the specified referrer between the last 30 days and the 30 days before that.
-   * If either of the total visits for the two time periods is zero, returns 0.
-   */
   private async getReferrerDifferencePercentage(
     userId: number,
     topReferrer: string,
   ) {
-    const thirtyDaysAgo = await this.analyticsRepository
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const previousThirtyDays = new Date();
+    previousThirtyDays.setDate(previousThirtyDays.getDate() - 60);
+
+    const totalVisitsThirtyDaysAgo = await this.analyticsRepository
       .createQueryBuilder('analytics')
-      .select(
-        'SUM(CASE WHEN LOWER(analytics.referrer) LIKE :referrer THEN 1 ELSE 0 END)',
-        'total_visits_thirty_days_ago',
-      )
-      .andWhere('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" > CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .setParameter('referrer', topReferrer)
-      .getRawOne();
-
-    const previousThirtyDays = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select(
-        'SUM(CASE WHEN LOWER(analytics.referrer) LIKE :referrer THEN 1 ELSE 0 END)',
-        'total_visits_previous_thirty_days',
-      )
-      .andWhere('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'60 days\'')
-      .andWhere('"created_at" < CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .setParameter('referrer', topReferrer)
-      .getRawOne();
-
-    const { total_visits_thirty_days_ago } = thirtyDaysAgo;
-    const { total_visits_previous_thirty_days } = previousThirtyDays;
-
-    const totalVisitsThirtyDaysAgo = Number(total_visits_thirty_days_ago);
-    const totalVisitsPreviousThirtyDays = Number(
-      total_visits_previous_thirty_days,
-    );
-
-    if (totalVisitsPreviousThirtyDays === 0 || totalVisitsThirtyDaysAgo === 0)
-      return 0;
-
-    const differencePercentage =
-      ((totalVisitsThirtyDaysAgo - totalVisitsPreviousThirtyDays) /
-        totalVisitsPreviousThirtyDays) *
-      100;
-
-    return differencePercentage;
-  }
-
-  async getTopReferrerOfLastThirtyDays(userId: number) {
-    const countThirtyDaysAgo = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('analytics.referrer', 'referrer')
+      .select('COUNT(*)', 'total_visits_thirty_days_ago')
       .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
         userId,
       })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
+      .andWhere('"created_at" >= :thirtyDaysAgo', { thirtyDaysAgo })
+      .andWhere('LOWER(analytics.referrer) LIKE :topReferrer', {
+        topReferrer: `%${topReferrer.toLowerCase()}%`,
+      })
+      .getRawOne();
+
+    const totalVisitsPreviousThirtyDays = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('COUNT(*)', 'total_visits_previous_thirty_days')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('"created_at" >= :previousThirtyDays', { previousThirtyDays })
+      .andWhere('"created_at" < :thirtyDaysAgo', { thirtyDaysAgo })
+      .andWhere('LOWER(analytics.referrer) LIKE :topReferrer', {
+        topReferrer: `%${topReferrer.toLowerCase()}%`,
+      })
+      .getRawOne();
+
+    const { total_visits_thirty_days_ago } = totalVisitsThirtyDaysAgo;
+    const { total_visits_previous_thirty_days } = totalVisitsPreviousThirtyDays;
+
+    const totalVisits30Days = Number(total_visits_thirty_days_ago);
+    const totalVisitsPrev30Days = Number(total_visits_previous_thirty_days);
+
+    if (totalVisitsPrev30Days === 0 || totalVisits30Days === 0) return 0;
+
+    return (
+      ((totalVisits30Days - totalVisitsPrev30Days) / totalVisitsPrev30Days) *
+      100
+    );
+  }
+
+  private async getTopReferrerOfLastThirtyDays(userId: number) {
+    const topReferrerResult = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('analytics.referrer', 'referrer')
+      .addSelect('COUNT(*)', 'visits')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('analytics.created_at >= :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(
+          new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+        ),
+      })
       .groupBy('analytics.referrer')
-      .orderBy('COUNT(*)', 'DESC')
+      .orderBy('visits', 'DESC')
       .limit(1)
       .getRawOne();
 
+    const topReferrer = topReferrerResult ? topReferrerResult.referrer : '';
+    const difference = await this.getReferrerDifferencePercentage(
+      userId,
+      topReferrer,
+    );
+
     return {
       title: 'Top referrer',
-      value: countThirtyDaysAgo.referrer,
-      difference: await this.getReferrerDifferencePercentage(
-        userId,
-        countThirtyDaysAgo.referrer,
-      ),
+      value: topReferrer !== '' ? topReferrer : 'N/D',
+      difference,
     };
   }
 
-  async getTopDevicesOfLastThirtyDays(userId: number) {
+  private async getTopDevicesOfLastThirtyDays(userId: number) {
     const result = await this.analyticsRepository
       .createQueryBuilder('analytics')
       .select('analytics.device as name, COUNT(*) as value')
       .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
         userId,
       })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
+      .andWhere('analytics.created_at >= :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(
+          new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+        ),
+      })
       .groupBy('analytics.device')
-      .orderBy('COUNT(*)', 'DESC')
+      .orderBy('value', 'DESC')
       .limit(4)
       .getRawMany();
 
     return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
   }
 
-  async getTopCountriesOfLastThirtyDays(userId: number) {
+  private async getTopPlatformsOfLastThirtyDays(userId: number) {
+    const result = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('analytics.platforms as name, COUNT(*) as value')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('analytics.created_at >= :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(
+          new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+        ),
+      })
+      .groupBy('analytics.platforms')
+      .orderBy('value', 'DESC')
+      .limit(4)
+      .getRawMany();
+
+    return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
+  }
+
+  private async getTopReferrersOfLastThirtyDays(userId: number) {
+    const result = await this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .select('analytics.referrer as name, COUNT(*) as value')
+      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
+        userId,
+      })
+      .andWhere('analytics.created_at >= :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(
+          new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+        ),
+      })
+      .groupBy('analytics.referrer')
+      .orderBy('value', 'DESC')
+      .limit(4)
+      .getRawMany();
+
+    return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
+  }
+
+  private async getTopCountriesOfLastThirtyDays(userId: number) {
     const result = await this.analyticsRepository
       .createQueryBuilder()
       .select(
@@ -312,56 +359,42 @@ export class AnalyticsService {
           .orderBy('analytics.location, COUNT(*)', 'DESC');
       }, 'cv')
       .orderBy('cv.country, cv.visits', 'DESC')
-      .limit(4)
+      .limit(6)
       .getRawMany();
 
-    return result;
-  }
-
-  async getTopPlatformsOfLastThirtyDays(userId: number) {
-    const result = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('analytics.platforms as name, COUNT(*) as value')
-      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .groupBy('analytics.platforms')
-      .orderBy('COUNT(*)', 'DESC')
-      .limit(4)
-      .getRawMany();
-
-    return result.map(({ name, value }) => ({ name, value: parseInt(value) }));
-  }
-
-  async getTopReferrersOfLastThirtyDays(userId: number) {
-    const result = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('analytics.referrer as name, COUNT(*) as value')
-      .where('"url_id" IN (SELECT id FROM urls WHERE "user_id" = :userId)', {
-        userId,
-      })
-      .andWhere('"created_at" >= CURRENT_TIMESTAMP - INTERVAL \'30 days\'')
-      .groupBy('analytics.referrer')
-      .orderBy('COUNT(*)', 'DESC')
-      .limit(4)
-      .getRawMany();
-
-    const response = result.map(({ name, value }) => ({
-      name,
-      value: parseInt(value),
+    return result.map((item) => ({
+      country: item.country,
+      visits: item.visits,
+      uniqueVisitors: item.unique_visitors,
+      mostVisitedURL: item.short_url,
     }));
-    console.log(response);
-    return response;
   }
 
-  /**
-   * Retrieves analytics data for a given short URL.
-   * @param shortURL The short URL for which analytics data is requested.
-   * @returns An object containing various analytics data such as total visits, unique visitors,
-   * return visitors, device usage, platform usage, referrer sources, browser usage, visits by country,
-   * more active days, and performance data for the last 7 days.
-   */
+  async getPerformanceOfLastThirtyDays(userId: number) {
+    const visits = await this.countVisitsLastThirtyDays(userId);
+    const uniqueVisitors = await this.countUniqueVisitsLastThirtyDays(userId);
+    const topCountry = await this.getTopCountryOfLastThirtyDays(userId);
+    const topReferrer = await this.getTopReferrerOfLastThirtyDays(userId);
+
+    const topDevices = await this.getTopDevicesOfLastThirtyDays(userId);
+    const topPlatforms = await this.getTopPlatformsOfLastThirtyDays(userId);
+    const topReferrers = await this.getTopReferrersOfLastThirtyDays(userId);
+    const topCountries = await this.getTopCountriesOfLastThirtyDays(userId);
+
+    return {
+      mainStats: {
+        visits,
+        uniqueVisitors,
+        topCountry,
+        topReferrer,
+      },
+      topPlatforms,
+      topReferrers,
+      topDevices,
+      topCountries,
+    };
+  }
+
   async getAnalyticsByShortURL(shortURL: string) {
     const mainStatsResult = await this.analyticsRepository
       .createQueryBuilder('analytics')
