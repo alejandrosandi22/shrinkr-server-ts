@@ -1,5 +1,6 @@
 import { MailerModule } from '@nestjs-modules/mailer';
-import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
+    CacheModule.register(),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -58,8 +60,8 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     URLsModule,
     AnalyticsModule,
-    AuthModule,
-    HealthModule,
+    forwardRef(() => AuthModule),
+    forwardRef(() => HealthModule),
   ],
   controllers: [],
   providers: [
