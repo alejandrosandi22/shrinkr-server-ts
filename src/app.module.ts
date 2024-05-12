@@ -1,5 +1,4 @@
 import { MailerModule } from '@nestjs-modules/mailer';
-import { CacheModule } from '@nestjs/cache-manager';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -16,7 +15,6 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    CacheModule.register(),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -36,8 +34,8 @@ import { UsersModule } from './users/users.module';
       username: process.env.DB_USER,
       entities: [UserEntity, URLEntity, AnalyticsEntity],
       database: process.env.DB_NAME,
-      synchronize: true,
-      logging: true,
+      synchronize: process.env.DB_SYNC === 'true',
+      logging: process.env.DB_LOGGING === 'true',
       cache: {
         alwaysEnabled: true,
         duration: 6000,
