@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -12,6 +13,7 @@ import { AnalyticsEntity } from '../../analytics/entities/analytics.entity';
 import { UserEntity } from '../../users/entities/user.entity';
 
 @Entity('urls')
+@Index('index_short_url', ['short_url'], { unique: true })
 export class URLEntity {
   @PrimaryGeneratedColumn()
   id!: number;
