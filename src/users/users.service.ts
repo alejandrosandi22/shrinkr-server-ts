@@ -2,6 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,11 +30,15 @@ export class UsersService {
     return this.userRepository.findOne({ where: { id }, select });
   }
 
-  getOneByEmail(email: string, select: UserEntityKey[]) {
-    return this.userRepository.findOne({
-      where: { email },
-      select,
-    });
+  async getOneByEmail(email: string, select: UserEntityKey[]) {
+    try {
+      return await this.userRepository.findOneOrFail({
+        where: { email },
+        select,
+      });
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   getOneByEmailWithPassword(email: string) {
@@ -43,11 +48,15 @@ export class UsersService {
     });
   }
 
-  getURLsByUser(id: number) {
-    return this.userRepository.findOne({
-      where: { id },
-      relations: ['urls'],
-    });
+  async getURLsByUser(id: number) {
+    try {
+      return await this.userRepository.findOneOrFail({
+        where: { id },
+        relations: ['urls'],
+      });
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   async resetPassword(email: string, password: string) {
