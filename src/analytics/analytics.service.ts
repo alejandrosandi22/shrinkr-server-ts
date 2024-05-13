@@ -396,112 +396,64 @@ export class AnalyticsService {
   }
 
   async getAnalyticsByShortURL(shortURL: string) {
-    const mainStatsResult = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select('COUNT(DISTINCT analytics.id)', 'totalVisits')
-      .addSelect('COUNT(DISTINCT analytics.ip)', 'uniqueVisitors')
-      .addSelect(
-        'COUNT(DISTINCT CASE WHEN subquery.count > 1 THEN analytics.ip END)',
-        'returnVisitors',
-      )
-      .leftJoin('analytics.url', 'url')
-      .where('url.short_url = :shortURL', { shortURL })
-      .leftJoin(
-        (subQuery) => {
-          return subQuery
-            .select('analytics.ip, COUNT(analytics.ip) as count')
-            .from(AnalyticsEntity, 'analytics')
-            .leftJoin('analytics.url', 'url')
-            .where('url.short_url = :shortURL', { shortURL })
-            .groupBy('analytics.ip');
-        },
-        'subquery',
-        'analytics.ip = subquery.ip',
-      )
-      .getRawOne();
-
-    const devices = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.device', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.device')
-      .orderBy('value', 'DESC')
-      .limit(5)
-      .getRawMany();
-
-    const platforms = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.platforms', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.platforms')
-      .orderBy('value', 'DESC')
-      .limit(5)
-      .getRawMany();
-
-    const referrers = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.referrer', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.referrer')
-      .orderBy('value', 'DESC')
-      .limit(5)
-      .getRawMany();
-
-    const browsers = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.browser', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.browser')
-      .orderBy('value', 'DESC')
-      .limit(5)
-      .getRawMany();
-
-    const visits_by_country = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.location', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.location')
-      .orderBy('value', 'DESC')
-      .limit(5)
-      .getRawMany();
-
     const currentDate = new Date();
     currentDate.setUTCHours(0, 0, 0, 0);
 
     const sixDaysAgo = new Date(currentDate);
     sixDaysAgo.setDate(currentDate.getDate() - 6);
 
-    const more_active_days = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .innerJoin('analytics.url', 'url')
-      .select('analytics.created_at', 'name')
-      .addSelect('COUNT(*)', 'value')
-      .where('url.short_url = :shortURL', { shortURL })
-      .groupBy('analytics.created_at')
-      .getRawMany();
-
-    const results = await this.analyticsRepository
-      .createQueryBuilder('analytics')
-      .select(`DATE(analytics.created_at) AS date`)
-      .addSelect('COUNT(*) AS visits')
-      .innerJoin('analytics.url', 'url')
-      .where(
-        '"analytics"."created_at" >= CURRENT_TIMESTAMP - INTERVAL \'7 days\'',
-      )
-      .andWhere('url.short_url = :shortURL', { shortURL })
-      .groupBy('DATE(analytics.created_at)')
-      .orderBy('DATE(analytics.created_at)', 'ASC')
-      .getRawMany();
+    const [
+      mainStatsResult,
+      devices,
+      platforms,
+      referrers,
+      browsers,
+      visitsByCountry,
+      moreActiveDays,
+      results,
+    ] = await Promise.all([
+      this.analyticsRepository
+        .createQueryBuilder('analytics')
+        .select('COUNT(DISTINCT analytics.id)', 'totalVisits')
+        .addSelect('COUNT(DISTINCT analytics.ip)', 'uniqueVisitors')
+        .addSelect(
+          'COUNT(DISTINCT CASE WHEN subquery.count > 1 THEN analytics.ip END)',
+          'returnVisitors',
+        )
+        .leftJoin('analytics.url', 'url')
+        .where('url.short_url = :shortURL', { shortURL })
+        .leftJoin(
+          (subQuery) => {
+            return subQuery
+              .select('analytics.ip, COUNT(analytics.ip) as count')
+              .from(AnalyticsEntity, 'analytics')
+              .leftJoin('analytics.url', 'url')
+              .where('url.short_url = :shortURL', { shortURL })
+              .groupBy('analytics.ip');
+          },
+          'subquery',
+          'analytics.ip = subquery.ip',
+        )
+        .getRawOne(),
+      this.getTopFive('device', shortURL),
+      this.getTopFive('platforms', shortURL),
+      this.getTopFive('referrer', shortURL),
+      this.getTopFive('browser', shortURL),
+      this.getTopFive('location', shortURL),
+      this.getMoreActiveDays(shortURL),
+      this.analyticsRepository
+        .createQueryBuilder('analytics')
+        .select(`DATE(analytics.created_at) AS date`)
+        .addSelect('COUNT(*) AS visits')
+        .innerJoin('analytics.url', 'url')
+        .where(
+          '"analytics"."created_at" >= CURRENT_TIMESTAMP - INTERVAL \'7 days\'',
+        )
+        .andWhere('url.short_url = :shortURL', { shortURL })
+        .groupBy('DATE(analytics.created_at)')
+        .orderBy('DATE(analytics.created_at)', 'ASC')
+        .getRawMany(),
+    ]);
 
     const resultMap = new Map<string, number>();
 
@@ -530,12 +482,36 @@ export class AnalyticsService {
       platforms,
       referrers,
       browsers,
-      visits_by_country,
-      more_active_days,
+      visitsByCountry,
+      moreActiveDays,
       last_7_days_performance,
       visits: mainStatsResult.totalVisits,
       unique_visitors: mainStatsResult.uniqueVisitors,
       return_visitors: mainStatsResult.returnVisitors,
     };
+  }
+
+  async getTopFive(field: string, shortURL: string) {
+    return this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .innerJoin('analytics.url', 'url')
+      .select(`analytics.${field}`, 'name')
+      .addSelect('COUNT(*)', 'value')
+      .where('url.short_url = :shortURL', { shortURL })
+      .groupBy(`analytics.${field}`)
+      .orderBy('value', 'DESC')
+      .limit(5)
+      .getRawMany();
+  }
+
+  async getMoreActiveDays(shortURL: string) {
+    return this.analyticsRepository
+      .createQueryBuilder('analytics')
+      .innerJoin('analytics.url', 'url')
+      .select('analytics.created_at', 'name')
+      .addSelect('COUNT(*)', 'value')
+      .where('url.short_url = :shortURL', { shortURL })
+      .groupBy('analytics.created_at')
+      .getRawMany();
   }
 }

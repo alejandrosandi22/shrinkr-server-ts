@@ -1,5 +1,5 @@
 import { MailerModule } from '@nestjs-modules/mailer';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -34,8 +34,8 @@ import { UsersModule } from './users/users.module';
       username: process.env.DB_USER,
       entities: [UserEntity, URLEntity, AnalyticsEntity],
       database: process.env.DB_NAME,
-      synchronize: true,
-      logging: true,
+      synchronize: process.env.DB_SYNC === 'true',
+      logging: process.env.DB_LOGGING === 'true',
       cache: {
         alwaysEnabled: true,
         duration: 6000,
@@ -58,8 +58,8 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     URLsModule,
     AnalyticsModule,
-    AuthModule,
-    HealthModule,
+    forwardRef(() => AuthModule),
+    forwardRef(() => HealthModule),
   ],
   controllers: [],
   providers: [
