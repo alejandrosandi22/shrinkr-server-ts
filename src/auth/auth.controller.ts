@@ -13,7 +13,6 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from './guards/auth.guard';
-import { FacebookGuard } from './guards/facebook.guard';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
 
 @Controller('auth')
@@ -63,21 +62,6 @@ export class AuthController {
     const { access_token } = await this.authService.oAuthLogin(req.user);
     return {
       url: `${process.env.CLIENT_APP_URL}/dashboard?access_token=${access_token}`,
-      status: 301,
-    };
-  }
-
-  @Get('facebook')
-  @UseGuards(FacebookGuard)
-  async facebookAuth() {}
-
-  @Get('facebook/callback')
-  @UseGuards(FacebookGuard)
-  @Redirect(`${process.env.CLIENT_APP_URL}`, 301)
-  async facebookAuthCallback(@Req() req: Request) {
-    const { access_token } = await this.authService.oAuthLogin(req.user);
-    return {
-      url: `${process.env.CLIENT_APP_URL}?access_token=${access_token}`,
       status: 301,
     };
   }
