@@ -5,7 +5,6 @@ import { config } from 'dotenv';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { FacebookStrategy } from './strategies/facebook.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 
 config();
@@ -21,6 +20,6 @@ config();
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, FacebookStrategy],
+  providers: [AuthService, GoogleStrategy],
 })
 export class AuthModule {}
