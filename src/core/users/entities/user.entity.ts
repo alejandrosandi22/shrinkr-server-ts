@@ -6,8 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { PlansEnum } from '../../lib/enums/plans.enum';
-import { ProviderEnum } from '../../lib/enums/provider.enum';
+import { OAuthEnum } from '../../../common/enums/oauth.enum';
 import { URLEntity } from '../../urls/entities/urls.entity';
 
 @Entity('users')
@@ -27,11 +26,8 @@ export class UserEntity {
   @Column({ nullable: true, select: false })
   password?: string;
 
-  @Column({ type: 'enum', enum: ProviderEnum })
-  provider!: ProviderEnum;
-
-  @Column({ type: 'enum', default: PlansEnum.FREE, enum: PlansEnum })
-  plan: PlansEnum;
+  @Column({ type: 'enum', enum: OAuthEnum })
+  provider!: OAuthEnum;
 
   @Column({ nullable: true, select: false })
   email_verified: Date;

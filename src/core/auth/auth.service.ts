@@ -7,10 +7,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { OAuthEnum } from 'src/common/enums/oauth.enum';
+import { recoveryPasswordTemplate } from '../../lib/templates/recovery-password.template';
+import { verificationEmailTemplate } from '../../lib/templates/verify-email.template';
 import { LoginDto } from '../auth/dto/login.dto';
-import { ProviderEnum } from '../lib/enums/provider.enum';
-import { recoveryPasswordTemplate } from '../lib/templates/recovery-password.template';
-import { verificationEmailTemplate } from '../lib/templates/verify-email.template';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -66,7 +66,7 @@ export class AuthService {
     const newUser = await this.usersService.create({
       ...registerDto,
       password: hashPassword,
-      provider: ProviderEnum.EMAIL,
+      provider: OAuthEnum.EMAIL,
     });
 
     const payload = { email, sub: newUser.id };

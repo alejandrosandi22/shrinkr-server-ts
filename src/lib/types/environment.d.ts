@@ -4,17 +4,16 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       ENV: 'test' | 'dev' | 'prod';
+
       DB_HOST: string;
       DB_PORT: number;
       DB_USER: string;
       DB_PASSWORD: string;
       DB_NAME: string;
+      DB_SYNC: boolean;
+      DB_LOGGING: boolean;
 
       JWT_SECRET: string;
-
-      FACEBOOK_CLIENT_ID: string;
-      FACEBOOK_CLIENT_SECRET: string;
-      FACEBOOK_CALLBACK_URL: string;
 
       GOOGLE_CLIENT_ID: string;
       GOOGLE_CLIENT_SECRET: string;

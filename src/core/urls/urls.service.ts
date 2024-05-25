@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as countryList from 'country-list';
 import * as geoip from 'geoip-lite';
-import { customAlphabet } from 'nanoid';
+import * as nanoid from 'nanoid';
 import * as schedule from 'node-schedule';
 import { Repository } from 'typeorm';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -26,7 +26,7 @@ export class URLsService {
   ) {}
 
   async create(createURLDto: CreateURLDto) {
-    const nanoid = customAlphabet(alphabet, 6);
+    const generateId = nanoid.customAlphabet(alphabet, 6);
 
     const forbbidenURLs = [
       'dashboard',
@@ -67,7 +67,7 @@ export class URLsService {
     } else {
       payload = {
         ...createURLDto,
-        short_url: nanoid(),
+        short_url: generateId(),
       };
     }
 
@@ -88,14 +88,14 @@ export class URLsService {
   }
 
   async shorten(createURLDto: CreateURLDto) {
-    const nanoid = customAlphabet(alphabet, 6);
+    const generateId = nanoid.customAlphabet(alphabet, 6);
 
     if (!createURLDto.expiration_date)
       throw new BadRequestException('Expiration date should be provided');
 
     const payload = {
       ...createURLDto,
-      short_url: nanoid(),
+      short_url: generateId(),
     };
 
     const newUrl = await this.urlRepository.save({
@@ -167,11 +167,11 @@ export class URLsService {
     });
 
     if (currentUrlData.custom_alias && !custom_alias) {
-      const nanoid = customAlphabet(alphabet, 6);
+      const generateId = nanoid.customAlphabet(alphabet, 6);
 
       updateURLDto = {
         ...updateURLDto,
-        short_url: nanoid(),
+        short_url: generateId(),
       };
     }
 

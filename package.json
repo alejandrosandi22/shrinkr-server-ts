@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "nest start --watch -b swc -w",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -21,7 +21,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@nestjs-modules/mailer": "^1.11.2",
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.2",
     "@nestjs/core": "^10.0.0",
@@ -34,11 +34,10 @@
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "compression": "^1.7.4",
     "country-list": "^2.3.0",
     "dotenv": "^16.4.5",
     "geoip-lite": "^1.4.10",
-    "nanoid": "^3.0.0",
+    "nanoid": "3.0.0",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.13",
     "passport-google-oauth20": "^2.0.0",
@@ -49,21 +48,21 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.2.2",
+    "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
-    "@types/bcryptjs": "^2.4.6",
+    "@swc/cli": "^0.3.12",
+    "@swc/core": "^1.5.6",
     "@types/compression": "^1.7.5",
     "@types/country-list": "^2.1.4",
-    "@types/express": "^4.17.17",
     "@types/geoip-lite": "^1.4.4",
     "@types/jest": "^29.5.2",
+    "@types/nanoid": "^3.0.0",
     "@types/node": "^20.3.1",
     "@types/node-schedule": "^2.1.7",
-    "@types/nodemailer": "^6.4.14",
-    "@types/passport-google-oauth20": "^2.0.14",
+    "@types/passport-google-oauth20": "^2.0.16",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
@@ -97,6 +96,5 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  },
-  "packageManager": "pnpm@9.1.1+sha256.9551e803dcb7a1839fdf5416153a844060c7bce013218ce823410532504ac10b"
+  }
 }
