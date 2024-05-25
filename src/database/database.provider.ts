@@ -12,12 +12,10 @@ export const DatabaseProvider: DynamicModule = TypeOrmModule.forRootAsync({
     autoLoadEntities: true,
     synchronize: process.env.DB_SYNC,
     logging: process.env.DB_LOGGING,
-    ssl: true,
-    extra: {
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    },
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
     cache: {
       alwaysEnabled: true,
       duration: 6000,
