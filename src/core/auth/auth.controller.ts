@@ -8,12 +8,15 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
+
+interface RequestWithUser extends Request {
+  user: any;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -21,7 +24,7 @@ export class AuthController {
 
   @Get('authorization')
   @UseGuards(AuthGuard)
-  async findAll(@Req() request: Request) {
+  async findAll(@Req() request: RequestWithUser) {
     const access_token = request.headers['authorization'].split(' ')[1];
     return await this.authService.isAuthenticated(access_token);
   }
@@ -58,7 +61,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
   @Redirect()
-  async googleAuthCallback(@Req() req: Request) {
+  async googleAuthCallback(@Req() req: RequestWithUser) {
     const { access_token } = await this.authService.oAuthLogin(req.user);
     return {
       url: `${process.env.CLIENT_APP_URL}/dashboard?access_token=${access_token}`,

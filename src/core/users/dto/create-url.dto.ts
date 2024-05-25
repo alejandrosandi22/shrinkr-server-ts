@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
-import { ProviderEnum } from '../../lib/enums/provider.enum';
+import { OAuthEnum } from '../../../common/enums/oauth.enum';
 
 export class CreateUserDto {
   @IsOptional()
@@ -19,7 +19,7 @@ export class CreateUserDto {
   email_verified?: Date;
 
   @IsNotEmpty()
-  provider: ProviderEnum;
+  provider: OAuthEnum;
 
   @IsOptional()
   current_password?: string;
