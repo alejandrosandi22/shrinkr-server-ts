@@ -32,23 +32,19 @@ export class AnalyticsService {
     });
   }
 
-  async countVisitsLastThirtyDays(id: number) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  private async countVisitsLastThirtyDays(userId: number) {
+    const currentDay = new Date();
 
     const countThirtyDaysAgo = await this.countVisitsInPeriod(
-      id,
-      thirtyDaysAgo,
-      new Date(),
+      userId,
+      new Date(currentDay.getDate() - 30),
+      currentDay,
     );
 
     const countSixtyDaysAgo = await this.countVisitsInPeriod(
-      id,
-      sixtyDaysAgo,
-      thirtyDaysAgo,
+      userId,
+      new Date(currentDay.getDate() - 60),
+      new Date(currentDay.getDate() - 30),
     );
 
     let growthPercentage = 0;
@@ -68,10 +64,10 @@ export class AnalyticsService {
     id: number,
     startDate: Date,
     endDate: Date,
-  ) {
+  ): Promise<number> {
     const result = await this.analyticsRepository
       .createQueryBuilder('analytics')
-      .select('COUNT(DISTINCT analytics.ip)', 'unique_visits')
+      .select('COUNT(DISTINCT analytics.ip)')
       .where(
         'analytics.url_id IN (SELECT id FROM urls WHERE "user_id" = :id)',
         { id },
@@ -82,25 +78,22 @@ export class AnalyticsService {
       })
       .getRawOne();
 
-    return result.unique_visits;
+    return Number(result.count);
   }
 
   async countUniqueVisitsLastThirtyDays(id: number) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const currentDay = new Date();
 
     const uniqueVisitsLastThirtyDays = await this.countUniqueVisitsInPeriod(
       id,
-      thirtyDaysAgo,
-      new Date(),
+      new Date(currentDay.getDate() - 30),
+      currentDay,
     );
+
     const uniqueVisitsLastSixtyDays = await this.countUniqueVisitsInPeriod(
       id,
-      sixtyDaysAgo,
-      thirtyDaysAgo,
+      new Date(currentDay.getDate() - 60),
+      new Date(currentDay.getDate() - 30),
     );
 
     let growthPercentage = 0;
@@ -483,7 +476,7 @@ export class AnalyticsService {
       referrers,
       browsers,
       visitsByCountry,
-      moreActiveDays,
+      daysWithMoreVisits: moreActiveDays,
       last_7_days_performance,
       visits: mainStatsResult.totalVisits,
       unique_visitors: mainStatsResult.uniqueVisitors,

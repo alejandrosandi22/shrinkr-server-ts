@@ -20,7 +20,11 @@ export class URLsController {
   @Post('create')
   @UseGuards(AuthGuard)
   create(@Body() createURLDto: CreateURLDto) {
-    return this.urlsService.create(createURLDto);
+    try {
+      return this.urlsService.create(createURLDto);
+    } catch (error) {
+      return new Error('Something went wrong');
+    }
   }
 
   @Post('shorten')

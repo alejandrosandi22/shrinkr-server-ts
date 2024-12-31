@@ -5,10 +5,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AnalyticsModule } from './core/analytics/analytics.module';
 import { AuthModule } from './core/auth/auth.module';
+import { HealthModule } from './core/health/health.module';
 import { URLsModule } from './core/urls/urls.module';
 import { UsersModule } from './core/users/users.module';
 import { DatabaseModule } from './database/database.module';
-import { HealthModule } from './core/health/health.module';
 
 @Module({
   imports: [

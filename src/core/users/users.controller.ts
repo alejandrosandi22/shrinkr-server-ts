@@ -9,10 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { UpdateUserDto } from './dto/update-url.dto';
-import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
-
-type UserEntityKey = keyof UserEntity;
 
 @Controller('users')
 export class UsersController {
@@ -23,10 +20,14 @@ export class UsersController {
     @Body()
     body: {
       email: string;
-      select: UserEntityKey[];
     },
   ) {
-    return this.usersService.getOneByEmail(body.email, body.select);
+    return this.usersService.getOneByEmail(body.email, [
+      'id',
+      'name',
+      'email',
+      'avatar',
+    ]);
   }
 
   @Post('support')

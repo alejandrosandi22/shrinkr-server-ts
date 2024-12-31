@@ -7,11 +7,19 @@ export class AnalyticsController {
 
   @Get('overview/:id')
   getPerformanceOfLastThirtyDays(@Param('id') id: string) {
-    return this.analyticsService.getPerformanceOfLastThirtyDays(+id);
+    try {
+      return this.analyticsService.getPerformanceOfLastThirtyDays(+id);
+    } catch (error) {
+      return new Error('Something went wrong');
+    }
   }
 
   @Get('url-analytics/:url')
   async getAnalyticsByShortURL(@Param('url') short_url: string) {
-    return await this.analyticsService.getAnalyticsByShortURL(short_url);
+    try {
+      return await this.analyticsService.getAnalyticsByShortURL(short_url);
+    } catch (error) {
+      return new Error('Something went wrong');
+    }
   }
 }

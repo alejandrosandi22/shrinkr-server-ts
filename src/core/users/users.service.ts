@@ -32,7 +32,7 @@ export class UsersService {
 
   async getOneByEmail(email: string, select: UserEntityKey[]) {
     try {
-      return await this.userRepository.findOneOrFail({
+      return await this.userRepository.findOne({
         where: { email },
         select,
       });
